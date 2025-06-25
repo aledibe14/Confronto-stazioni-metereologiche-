@@ -1,0 +1,35 @@
+import pandas as pd
+
+# Nomi dei file input (cambia con i tuoi)
+file1 = "Oropa_91_24.txt"
+file2 = "Vercelli_94_24.txt"
+
+# Funzione per leggere i file e creare la colonna Date
+def load_and_prepare(filename):
+    # Legge il file (spazi o tab come separatori)
+    df = pd.read_csv(filename, delim_whitespace=True, header=None,
+                     names=["Year", "Month", "Day", "Precip", "Tmax", "Tmin"])
+    # Crea la colonna Date
+    df['Date'] = pd.to_datetime(df[['Year', 'Month', 'Day']])
+    return df
+
+# Carica i dati
+df1 = load_and_prepare(file1)
+df2 = load_and_prepare(file2)
+
+# Trova le date comuni
+date_comuni = set(df1['Date']).intersection(set(df2['Date']))
+
+# Filtra solo le righe con date comuni
+df1_common = df1[df1['Date'].isin(date_comuni)].copy()
+df2_common = df2[df2['Date'].isin(date_comuni)].copy()
+
+# Ordina per data
+df1_common.sort_values('Date', inplace=True)
+df2_common.sort_values('Date', inplace=True)
+
+# Esporta con la colonna Date come prima 3 colonne separate (anno, mese, giorno)
+df1_common[['Year', 'Month', 'Day', 'Precip', 'Tmax', 'Tmin']].to_csv("stazione1_allineata.txt", sep='\t', index=False, header=False)
+df2_common[['Year', 'Month', 'Day', 'Precip', 'Tmax', 'Tmin']].to_csv("stazione2_allineata.txt", sep='\t', index=False, header=False)
+
+print("File allineati creati: 'stazione1_allineata.txt' e 'stazione2_allineata.txt'")
