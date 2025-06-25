@@ -1,0 +1,61 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+
+file1 = "stazione1_allineata.txt"
+file2 = "stazione2_allineata.txt"
+
+station1_name = "Oropa"
+station2_name = "Vercelli"
+
+def load_data(file):
+    df = pd.read_csv(file, sep=r"\s+", header=None,
+                     names=["Year", "Month", "Day", "Precip", "Tmax", "Tmin"],
+                     na_values=-99.9)
+    df["Date"] = pd.to_datetime(df[["Year", "Month", "Day"]])
+    return df[["Date", "Precip", "Tmax", "Tmin"]].set_index("Date")
+
+df1 = load_data(file1)
+df2 = load_data(file2)
+df = pd.merge(df1, df2, left_index=True, right_index=True, suffixes=('_1', '_2'))
+annual = df.resample('Y').mean()
+
+output_folder = "grafici_output"
+os.makedirs(output_folder, exist_ok=True)
+
+def plot_comparison(col1, col2, ylabel, title, filename):
+    years = annual.index.year
+    y1 = annual[col1]
+    y2 = annual[col2]
+
+    slope1, intercept1 = np.polyfit(years, y1, 1)
+    slope2, intercept2 = np.polyfit(years, y2, 1)
+    trend1 = slope1 * years + intercept1
+    trend2 = slope2 * years + intercept2
+
+    plt.figure(figsize=(12, 5))
+    plt.plot(years, y1, label=station1_name, marker='o', color='blue')
+    plt.plot(years, y2, label=station2_name, marker='o', color='green')
+
+    plt.plot(years, trend1, linestyle='--', color='blue',
+             label=f'{station1_name} trend (slope={slope1:.2f})')
+    plt.plot(years, trend2, linestyle='--', color='green',
+             label=f'{station2_name} trend (slope={slope2:.2f})')
+
+    plt.title(title)
+    plt.ylabel(ylabel)
+    plt.xlabel('Anno')
+    plt.grid(True, linestyle='--', alpha=0.5)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_folder, filename), dpi=300)
+    plt.close()
+    print(f"✅ Salvato con trend: {filename}")
+
+plot_comparison('Tmax_1', 'Tmax_2', 'Temperatura media massima (°C)',
+                'Confronto Temperature Massime Annuali', 'Tmax_comparazione.png')
+plot_comparison('Tmin_1', 'Tmin_2', 'Temperatura media minima (°C)',
+                'Confronto Temperature Minime Annuali', 'Tmin_comparazione.png')
+plot_comparison('Precip_1', 'Precip_2', 'Precipitazione media (mm)',
+                'Confronto Precipitazioni Annuali', 'Precipitazioni_comparazione.png')
