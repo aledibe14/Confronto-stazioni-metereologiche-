@@ -1,0 +1,14 @@
+import pandas as pd
+
+def load_dates(path):
+    df = pd.read_csv(path, sep='\s+', header=None, usecols=[0, 1, 2],
+                     names=["Year", "Month", "Day"])
+    return pd.to_datetime(df)
+
+dates1 = load_dates("stazione1_allineata.txt")
+dates2 = load_dates("stazione2_allineata.txt")
+
+if dates1.equals(dates2):
+    print("✅ Le date sono perfettamente allineate")
+else:
+    print("❌ Le date sono diverse")
